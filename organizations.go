@@ -15,20 +15,20 @@
 package main
 
 import (
-	"google.golang.org/api/admin/directory/v1"
 	"encoding/json"
+	"google.golang.org/api/admin/directory/v1"
 	"log"
 )
 
-type Organizations []*admin.UserOrganization
+type organizations []*admin.UserOrganization
 
-func parseOrganizations(o interface{}) Organizations {
+func parseOrganizations(o interface{}) organizations {
 	bytes, err := json.Marshal(o)
 	if err != nil {
 		log.Fatalf("Could not encode organizations: %v", err)
 	}
 
-	var orgs Organizations
+	var orgs organizations
 
 	err = json.Unmarshal(bytes, &orgs)
 	if err != nil {
@@ -38,7 +38,7 @@ func parseOrganizations(o interface{}) Organizations {
 	return orgs
 }
 
-func (orgs Organizations) Primary() *admin.UserOrganization {
+func (orgs organizations) Primary() *admin.UserOrganization {
 	for _, org := range orgs {
 		if org.Primary {
 			return org

@@ -15,14 +15,14 @@
 package main
 
 import (
-	"google.golang.org/api/admin/directory/v1"
 	"encoding/json"
+	"google.golang.org/api/admin/directory/v1"
 	"log"
 )
 
-type PhoneNumbers []*admin.UserPhone
+type phoneNumbers []*admin.UserPhone
 
-func parsePhoneNumbers(o interface{}) (numbers PhoneNumbers) {
+func parsePhoneNumbers(o interface{}) (numbers phoneNumbers) {
 	data, err := json.Marshal(o)
 	if err != nil {
 		log.Fatalf("Failed to encode phone numbers: %v", err)
@@ -35,7 +35,7 @@ func parsePhoneNumbers(o interface{}) (numbers PhoneNumbers) {
 	return numbers
 }
 
-func (nos PhoneNumbers) Type(t string) *admin.UserPhone {
+func (nos phoneNumbers) Type(t string) *admin.UserPhone {
 	for _, no := range nos {
 		if no.Type == t {
 			return no

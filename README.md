@@ -10,8 +10,14 @@ $ go get github.com/rjelierse/update-gmail-signature
 
 ## Usage
 
-To use this program, valid Google API credentials are required. You'll need OAuth client credentials,
-downloaded in JSON format.
+To use this program, a valid Google API service account is required. This account should have
+[delegated domain-wide authority](https://developers.google.com/admin-sdk/directory/v1/guides/delegation)
+to allow changing user details.
+
+You should allow access to these scope:
+
+* `https://www.googleapis.com/auth/admin.directory.user.readonly`
+* `https://www.googleapis.com/auth/gmail.settings.basic`
 
 Also, you'll need an HTML template to use as a basis for the email signature.
 
@@ -21,6 +27,9 @@ Also, you'll need an HTML template to use as a basis for the email signature.
   where the command is executed.
 * `-template`: Set the path to the signature template. Defaults to `template.html` file in the directory
   where the command is executed.
+* `-domain`: The domain to use when looking up users in the G Suite directory.
+* `-subject`: The user to impersonate when looking up users in the G Suite directory.
+  This user should have full access to the directory.
 
 ### Template variables
 
