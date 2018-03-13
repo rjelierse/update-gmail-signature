@@ -15,71 +15,14 @@
 package main
 
 import (
-	"bytes"
 	"flag"
-	"fmt"
-	"golang.org/x/net/context"
 	"golang.org/x/oauth2/google"
-	"golang.org/x/oauth2/jwt"
 	"google.golang.org/api/admin/directory/v1"
 	"google.golang.org/api/gmail/v1"
 	"html/template"
 	"io/ioutil"
 	"log"
 )
-
-type signatureFields struct {
-	Name   string
-	Title  string
-	Mobile string
-}
-
-func getFields(user *admin.User) (fields signatureFields) {
-	fields.Name = user.Name.FullName
-	if org := parseOrganizations(user.Organizations).Primary(); org != nil {
-		fields.Title = org.Title
-	}
-	if phone := parsePhoneNumbers(user.Phones).Type("mobile"); phone != nil {
-		fields.Mobile = phone.Value
-	}
-	return
-}
-
-func getUsers(domain string, config *jwt.Config) []*admin.User {
-	client, err := admin.New(config.Client(context.Background()))
-	if err != nil {
-		log.Fatal("Unable to create Admin SDK client:", err)
-	}
-	users, err := client.Users.List().Domain(domain).Do()
-	if err != nil {
-		log.Fatal("Unable to retrieve list of users:", err)
-	}
-	return users.Users
-}
-
-func setSignature(user *admin.User, tpl *template.Template, config *jwt.Config) {
-	fmt.Printf("Updating signature for user %v\n", user.PrimaryEmail)
-	var buf bytes.Buffer
-
-	v := getFields(user)
-
-	if err := tpl.Execute(&buf, v); err != nil {
-		log.Fatal("Cannot execute template:", err)
-	}
-
-	result := buf.String()
-
-	config.Subject = user.PrimaryEmail
-	client, err := gmail.New(config.Client(context.Background()))
-	if err != nil {
-		log.Fatal("Unable to create GMail client:", err)
-	}
-
-	_, err = client.Users.Settings.SendAs.Patch(user.PrimaryEmail, user.PrimaryEmail, &gmail.SendAs{Signature: result}).Do()
-	if err != nil {
-		log.Fatal("Unable to set signature:", err)
-	}
-}
 
 func main() {
 	var credentialsPath string
@@ -99,12 +42,12 @@ func main() {
 
 	credentials, err := ioutil.ReadFile(credentialsPath)
 	if err != nil {
-		log.Fatalf("Unable to read client secret file: %v", err)
+		log.Fatal("Unable to read client secret file:", err)
 	}
 
 	config, err := google.JWTConfigFromJSON(credentials, gmail.GmailSettingsBasicScope, admin.AdminDirectoryUserReadonlyScope)
 	if err != nil {
-		log.Fatalf("Unable to parse client secret file to config: %v", err)
+		log.Fatal("Unable to parse client secret file to config:", err)
 	}
 
 	if len(subject) > 0 {
@@ -113,7 +56,7 @@ func main() {
 
 	tpl, err := template.ParseFiles(templatePath)
 	if err != nil {
-		log.Fatalf("Unable to parse signature template: %v", err)
+		log.Fatal("Unable to parse signature template:", err)
 	}
 
 	for _, user := range getUsers(domain, config) {
