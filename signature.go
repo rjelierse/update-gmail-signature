@@ -17,18 +17,21 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"html/template"
+	"log"
+
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2/jwt"
 	"google.golang.org/api/admin/directory/v1"
-	"google.golang.org/api/gmail/v1"
-	"html/template"
-	"log"
+	gmail "google.golang.org/api/gmail/v1"
 )
 
 type signatureFields struct {
-	Name   string
-	Title  string
-	Mobile string
+	Name    string
+	Title   string
+	Mobile  string
+	Phone   string
+	Address string
 }
 
 func getFields(user *admin.User) (fields signatureFields) {
@@ -36,8 +39,15 @@ func getFields(user *admin.User) (fields signatureFields) {
 	if org := parseOrganizations(user.Organizations).Primary(); org != nil {
 		fields.Title = org.Title
 	}
-	if phone := parsePhoneNumbers(user.Phones).Type("mobile"); phone != nil {
+	phones := parsePhoneNumbers(user.Phones)
+	if phone := phones.Type("mobile"); phone != nil {
 		fields.Mobile = phone.Value
+	}
+	if phone := phones.Type("work"); phone != nil {
+		fields.Phone = phone.Value
+	}
+	if address := parseAddresses(user.Addresses).Type("work"); address != nil {
+		fields.Address = address.Formatted
 	}
 	return
 }
