@@ -16,12 +16,13 @@ package main
 
 import (
 	"flag"
-	"golang.org/x/oauth2/google"
-	"google.golang.org/api/admin/directory/v1"
-	"google.golang.org/api/gmail/v1"
 	"html/template"
 	"io/ioutil"
 	"log"
+
+	"golang.org/x/oauth2/google"
+	"google.golang.org/api/admin/directory/v1"
+	"google.golang.org/api/gmail/v1"
 )
 
 func main() {
@@ -29,16 +30,14 @@ func main() {
 	var templatePath string
 	var domain string
 	var subject string
+	var userKey string
 
 	flag.StringVar(&credentialsPath, "secret", "client_secret.json", "The path to Google API credentials JSON")
 	flag.StringVar(&templatePath, "template", "template.html", "The path to the signature template")
-	flag.StringVar(&domain, "domain", "", "The organisational domain to retrieve the users from")
+	flag.StringVar(&domain, "domain", "", "Apply template to users in this organisational domain")
 	flag.StringVar(&subject, "subject", "", "The person to impersonate when retrieving the users")
+	flag.StringVar(&userKey, "user", "", "Apply template to this user")
 	flag.Parse()
-
-	if len(domain) == 0 {
-		log.Fatal("Please specify a domain")
-	}
 
 	credentials, err := ioutil.ReadFile(credentialsPath)
 	if err != nil {
@@ -51,7 +50,7 @@ func main() {
 	}
 
 	if len(subject) > 0 {
-		config.Subject = subject
+		log.Fatal("Specify a user to impersonate")
 	}
 
 	tpl, err := template.ParseFiles(templatePath)
@@ -59,10 +58,19 @@ func main() {
 		log.Fatal("Unable to parse signature template:", err)
 	}
 
-	for _, user := range getUsers(domain, config) {
-		// Don't attempt to update signature for users without GMail
+	if len(userKey) > 0 {
+		user := getUser(userKey, config)
 		if user.IsMailboxSetup {
 			setSignature(user, tpl, config)
 		}
+	} else if len(domain) > 0 {
+		for _, user := range getUsers(domain, config) {
+			// Don't attempt to update signature for users without GMail
+			if user.IsMailboxSetup {
+				setSignature(user, tpl, config)
+			}
+		}
+	} else {
+		log.Fatal("Either specify a domain or a user to apply the template to")
 	}
 }

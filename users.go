@@ -15,10 +15,11 @@
 package main
 
 import (
+	"log"
+
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2/jwt"
 	"google.golang.org/api/admin/directory/v1"
-	"log"
 )
 
 func getUsers(domain string, config *jwt.Config) []*admin.User {
@@ -31,4 +32,16 @@ func getUsers(domain string, config *jwt.Config) []*admin.User {
 		log.Fatal("Unable to retrieve list of users:", err)
 	}
 	return users.Users
+}
+
+func getUser(subject string, config *jwt.Config) *admin.User {
+	client, err := admin.New(config.Client(context.Background()))
+	if err != nil {
+		log.Fatal("Unable to create Admin SDK client:", err)
+	}
+	user, err := client.Users.Get(subject).Do()
+	if err != nil {
+		log.Fatal("Unable to get user ", subject, ":", err)
+	}
+	return user
 }
